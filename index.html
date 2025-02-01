@@ -10,8 +10,38 @@
 
 <body onload="onInit()">
 
+    <h1 class="stats-container">
+        <a class="mines-left">0</a>
+        <a class="smiley" onclick="onInit()">😊</a>
+        <a class="timer">0</a>
+    </h1>
+    <h1 class="lives">
+        <span></span> LIVES LEFT
+    </h1>
+    <h1>
+        <img class="hint" onclick="onHint(this)" src="img/hint.png" alt="">
+        <img class="hint" onclick="onHint(this)" src="img/hint.png" alt="">
+        <img class="hint" onclick="onHint(this)" src="img/hint.png" alt="">
+    </h1>
     <div class="board-container"></div>
+    <h1>
+        <button class="safe-click-btn" onclick="onSafeClick()">Safe Clicks: <span></span></button>
+        <button class="undo-btn" onclick="onUndo()">UNDO</button>
+    </h1>
 
+    <h1>
+        <button class="diff-btn" onclick="onDifficulty(this)">Beginner</button>
+        <button class="diff-btn" onclick="onDifficulty(this)">Medium</button>
+        <button class="diff-btn" onclick="onDifficulty(this)">Expert</button>
+        <button class="diff-btn" onclick="onCostume()">Costume</button>
+    </h1>
+
+    <div class="score">
+        <h1>Best score:</h1>
+        <h2 class="beginner">Beginner: <span></span></h2>
+        <h2 class="medium">Medium: <span></span></h2>
+        <h2 class="expert">Expert: <span></span></h2>
+    </div>
     <script src="js/utils.js"></script>
     <script src="js/game.js"></script>
 </body>
