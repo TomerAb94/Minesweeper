@@ -340,6 +340,7 @@ function hasLife(elCell, i, j) {
 }
 
 function onHint(elHint) {
+    if (!gGame.isOn)return
     if (gGame.coveredCount === gLevel.SIZE ** 2) return //cant hint on first click
     if (elHint.style.backgroundcolor === 'none') return
     elHint.style.filter = hintStyle()
