@@ -96,3 +96,22 @@ function renderLives() {
     var elLives = document.querySelector('.lives span')
     elLives.innerText = gGame.lives
 }
+
+function hintStyle(){
+    return `drop-shadow(0px 0px 15px yellow) 
+    drop-shadow(0px 0px 30px orange) 
+    drop-shadow(0px 0px 45px red)`
+}
+
+function renderBombCursor(){
+
+    document.querySelectorAll("td").forEach(td => {
+        td.style.cursor = "url('https://abs.twimg.com/emoji/v2/72x72/1f4a3.png') 5 5, auto";
+    });
+}
+
+function renderCursor(){
+    document.querySelectorAll("td").forEach(td => {
+        td.style.cursor = "pointer"
+    });
+}

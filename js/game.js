@@ -14,6 +14,7 @@ var gTimeDisplay
 
 var gUnminedLocations
 var gCellsClicked = []
+var gMinesPlaced = 0
 
 var gGame = {
     isOn: false,
@@ -55,6 +56,7 @@ function onInit() {
     renderSmiley(GAME_EMOJI)
     renderLives()
     turnOffHints()
+    if (gLevel.levelName === 'costume') renderBombCursor()
 
     document.querySelector(`.beginner span`).innerHTML = localStorage.beginner
     document.querySelector(`.medium span`).innerHTML = localStorage.medium
@@ -65,6 +67,7 @@ function onInit() {
 }
 
 function onFirstClick() {
+
     gTimeCount = setInterval(function () {
         gGame.secsPassed++;
         renderTimer();
@@ -120,8 +123,7 @@ function implentMines(minesAmount) {
     // gBoard[3][0].isMine = true
     // gBoard[3][1].isMine = true
 
-    // The random func ahead works
-
+    // The random func:
     var unminedCells = getUnminedLocations()
 
     for (var i = 0; i < minesAmount; i++) {
@@ -132,6 +134,7 @@ function implentMines(minesAmount) {
         else gBoard[location.i][location.j].isMine = true
     }
 
+
 }
 
 function onCellClicked(elCell, i, j) {
@@ -141,6 +144,11 @@ function onCellClicked(elCell, i, j) {
         if (!gGame.isOn) return
         if (!currCell.isCoverd) return
         if (currCell.isMarked) return
+
+        if (gLevel.levelName === 'costume' && gMinesPlaced<gLevel.MINES) {
+            putMines(elCell, i, j)
+            return
+        }
 
 
         if (currCell.isMine && gGame.lives > 1) {
@@ -156,7 +164,7 @@ function onCellClicked(elCell, i, j) {
         //Model
         currCell.isCoverd = false
 
-        if (gGame.coveredCount === gLevel.SIZE ** 2) onFirstClick()
+        if (gGame.coveredCount === gLevel.SIZE ** 2 && gLevel.levelName !== 'costume') onFirstClick()
 
         //DOM
         elCell.classList.add(`${getClassVal(gBoard[i][j])}`)
@@ -181,8 +189,10 @@ function onCellClicked(elCell, i, j) {
 
 
     } else {
-        getHint(elCell, i, j)
+        getHint(i, j)
     }
+
+
 }
 
 function getClassVal(currCell) {
@@ -238,7 +248,12 @@ function expandUncover(iCell, jCell) {
             if (i === iCell && j === jCell) continue
 
             if (!currCell.minesAroundCount && !currCell.isMine) {
-                gCellsClicked.unshift([elCurrCell, i, j])  // for UNDO btn
+
+                var cellInfotoIndexOf = `${[elCurrCell, i, j]}` // for UNDO btn
+                if (gCellsClicked.indexOf(cellInfotoIndexOf) !== -1) {
+                    gCellsClicked.unshift([elCurrCell, i, j])  // for UNDO btn
+                }
+
                 onCellClicked(elCurrCell, i, j)
             }
         }
@@ -296,6 +311,12 @@ function onDifficulty(elBtn) {
         gLevel.levelName = 'expert'
     }
 
+    if (elBtn.innerText === 'Costume') {
+        gLevel.SIZE = +prompt('Table Size? (i=j)')
+        gLevel.MINES = +prompt(`Mines Amount? less then ${gLevel.SIZE ** 2}!`)
+        gLevel.levelName = 'costume'
+    }
+
     onInit()
 }
 
@@ -320,16 +341,19 @@ function hasLife(elCell, i, j) {
 
 function onHint(elHint) {
     if (gGame.coveredCount === gLevel.SIZE ** 2) return //cant hint on first click
-    if (elHint.style.backgroundColor === 'yellow') return
-    elHint.style.filter = `drop-shadow(0px 0px 15px yellow) 
-    drop-shadow(0px 0px 30px orange) 
-    drop-shadow(0px 0px 45px red)`
+    if (elHint.style.backgroundcolor === 'none') return
+    elHint.style.filter = hintStyle()
+    elHint.style.backgroundcolor = 'none'
+
+    console.log(elHint.style.filter);
+    console.log(hintStyle());
+
 
     gGame.isHintOn = true
     gGame.isOn = false
 }
 
-function getHint(elCell, i, j) {
+function getHint(i, j) {
     var currCell = gBoard[i][j]
     if (!currCell.isCoverd) return
 
@@ -370,6 +394,10 @@ function turnOffHints() {
     el[0].style.filter = ''
     el[1].style.filter = ''
     el[2].style.filter = ''
+    el[0].style.backgroundcolor = ''
+    el[1].style.backgroundcolor = ''
+    el[2].style.backgroundcolor = ''
+
 }
 
 function bestScore() {
@@ -419,7 +447,7 @@ function onSafeClick() {
 
 function onUndo() {
     if (!gGame.isOn) return
-    if (!gCellsClicked.length) return
+    if (gCellsClicked.length === 1) return //cant undo first click
 
     var cellToUndo = gCellsClicked.splice(gCellsClicked.length - 1, 1)
     var elCell = cellToUndo[0][0]
@@ -432,16 +460,47 @@ function onUndo() {
     elCell.classList.remove(`${getClassVal(currCell)}`)
 
     //Model
-    currCell.isCoverd = true
-    currCell.isMarked = false
+    if (currCell.isMarked) {
+        currCell.isMarked = false
+        gGame.markedCount--
+    }
+    if (!currCell.isCoverd) {
+        currCell.isCoverd = true
+        gGame.coveredCount++
+    }
 
+    renderMinesLeft(gLevel.MINES, gGame.markedCount)
 }
 
-function onCostume(){
+function onCostume() {
     // get size and mines amount from user
-gLevel.SIZE= +prompt('Table Size? (i=j)')
-gLevel.MINES= +prompt(`Mines Amount? less then ${gLevel.SIZE**2}!`)
+    gLevel.SIZE = +prompt('Table Size? (i=j)')
+    gLevel.MINES = +prompt(`Mines Amount? less then ${gLevel.SIZE ** 2}!`)
 
-gGame.isOn=false
+    onInit()
+}
+
+function putMines(elCell, i, j) {
+    var currCell = gBoard[i][j]
+    if(currCell.isMine){
+        alert('Already contains Mine')
+        return
+    }
+
+    //Model
+    currCell.isMine=true
+    gMinesPlaced++
+
+    //DOM
+    elCell.innerText = MINE
+
+    setTimeout(() => {
+        elCell.innerText = EMPTY
+    }, 200);
+
+if (gMinesPlaced === gLevel.MINES){
+    setMinesNegsCount(gBoard)
+    renderCursor()
+} 
 
 }
